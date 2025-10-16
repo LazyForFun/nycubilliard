@@ -7,7 +7,7 @@
         <div class="match-info">
             <span class="player1">
                 {% if match.player1 %}
-                    {{ match.player1.name }} ({{ match.player1.innings }})
+                    {{ match.player1.name }}
                 {% elif match.stage.name == "Tie Breaker" or 'Losers Round' in match.stage.name%}
                     Loser of {{ match.source_match1.match_number }}
                 {% elif match.source_match1 %}
@@ -27,7 +27,7 @@
 
             <span class="player2">
                 {% if match.player2 %}
-                    {{ match.player2.name }} ({{ match.player2.innings }})
+                    {{ match.player2.name }}
                 {% elif match.stage.name == "Tie Breaker" or 'Losers' in match.stage.name %}
                     Loser of {{ match.source_match2.match_number }}
                 {% elif match.source_match2 %}

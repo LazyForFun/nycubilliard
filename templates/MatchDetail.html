@@ -3,7 +3,6 @@
 {% block switch %}{% endblock %}
 {% block title %}比賽編號: {{ match.match_number }}{% endblock %}
 
-
 {% block content %}
 <div class="match-detail-container">
     <h2>比賽編號: {{ match.match_number }}</h2>
@@ -31,7 +30,7 @@
         </span>
     </div>
 
-    <form method="post" action="{% url 'MatchDetailView' match.id %}">
+    <form method="post" action="{% url 'MatchDetailView' match.id %}" id="matchForm">
         {% csrf_token %}
 
         <!-- 第二行: 比分輸入 -->
@@ -40,11 +39,23 @@
             <input type="text" name="point2" placeholder="選手2比分" value="{{ match.point2 }}">
         </div>
 
+        <!-- 🏆 新增：勝者選擇 -->
+        <div class="match-row winner-row">
+            <label>選擇勝者：</label>
+            <input type="hidden" name="winner" id="winnerInput" value="">
+            <button type="button" class="btn-select-winner" data-winner="player1">
+                {{ match.player1.name|default:"選手 1" }}
+            </button>
+            <button type="button" class="btn-select-winner" data-winner="player2">
+                {{ match.player2.name|default:"選手 2" }}
+            </button>
+        </div>
+
         <!-- 第三行: 開賽時間輸入 -->
         <div class="match-row start-time-row">
             <label for="start_time">開賽時間:</label>
             <input type="datetime-local" name="start_time" id="start_time"
-                value="{{ match.start_time|date:'Y-m-d\TH:i' }}">
+                value="{{ match.start_time|date:'Y-m-d\\TH:i' }}">
         </div>
 
         <!-- 第四行: 桌次輸入 -->
@@ -58,8 +69,30 @@
             <button type="submit">儲存</button>
         </div>
     </form>
-
 </div>
+
+<!-- JS 控制勝者按鈕 -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const buttons = document.querySelectorAll(".btn-select-winner");
+    const winnerInput = document.getElementById("winnerInput");
+
+    buttons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            // 清除狀態
+            buttons.forEach(b => {
+                b.classList.remove("selected");
+                b.disabled = false;
+            });
+
+            // 設定當前
+            btn.classList.add("selected");
+            btn.disabled = true;
+            winnerInput.value = btn.dataset.winner;
+        });
+    });
+});
+</script>
 
 <style>
 .match-detail-container {
@@ -91,11 +124,35 @@
     justify-content: center;
     gap: 1rem;
 }
-
 .score-row input {
     width: 100px;
     padding: 0.4rem;
     font-size: 1rem;
+}
+
+/* 🏆 新增的勝者選擇 */
+.winner-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+}
+.btn-select-winner {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 0.4rem 1rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+.btn-select-winner:hover {
+    background-color: #d9f7be;
+}
+.btn-select-winner.selected {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+    transform: scale(1.05);
 }
 
 /* 第三行 & 第四行: 開賽時間與桌次 */
@@ -105,7 +162,6 @@
     align-items: center;
     gap: 0.5rem;
 }
-
 .start-time-row input, .table-row input {
     padding: 0.4rem;
     font-size: 1rem;
@@ -116,7 +172,6 @@
     display: flex;
     justify-content: center;
 }
-
 .action-row button {
     padding: 0.5rem 1.2rem;
     font-size: 1rem;
@@ -126,24 +181,8 @@
     border-radius: 6px;
     cursor: pointer;
 }
-
 .action-row button:hover {
     background-color: #45a049;
-}
-
-/* 手機響應 */
-@media (max-width: 600px) {
-    .score-row {
-        flex-direction: column;
-        align-items: center;
-    }
-    .score-row input {
-        width: 80%;
-    }
-    .start-time-row, .table-row {
-        flex-direction: column;
-        align-items: flex-start;
-    }
 }
 </style>
 {% endblock %}

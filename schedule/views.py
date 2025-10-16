@@ -55,23 +55,14 @@ class MatchDetailView(LoginRequiredMixin, View):
         match.table = request.POST.get('table')
         match.point1 = request.POST.get('point1')
         match.point2 = request.POST.get('point2')
-        if match.point1 == 'W':
-            match.point2 = 'FF'
+
+        winner_field = request.POST.get("winner")
+        if winner_field == "player1":
             match.winner = match.player1
             match.loser = match.player2
-        elif match.point2 == 'W':
-            match.point1 = 'FF'
+        elif winner_field == "player2":
             match.winner = match.player2
             match.loser = match.player1
-        elif match.player1 and int(match.point1) == match.player1.innings:
-            match.winner = match.player1
-            match.loser = match.player2
-        elif match.player2 and int(match.point2) == match.player2.innings:
-            match.winner = match.player2
-            match.loser = match.player1
-        else:
-            match.winner = None
-            match.loser = None
         match.save()
 
         next_matches = Match.objects.filter(Q(source_match1=match) | Q(source_match2=match))
