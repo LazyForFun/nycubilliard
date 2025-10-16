@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+{% block switch %}{% endblock %}
+{% block title %}{{ announcement.title}}{% endblock %}
+
+
+{% block content %}
+<div class="announcements">
+     {{ announcement.content }}
+</div>
+
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block switch %}{% endblock %}
+{% block title %}登入{% endblock %}
+
+
+{% block content %}
+<form method="POST">
+    {% csrf_token %}
+        <div class="row mb-3">
+            <div class="col-2 themed-grid-col"><h1>帳號：<h1></div>
+            <div class="col-4 themed-grid-col">
+                <input class="form-control" type="text" name="username" id="username" placeholder="英文字母要大寫">
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-2 themed-grid-col"><h1>密碼：</h1></div>
+            <div class="col-4 themed-grid-col">
+                <input class="form-control" type="password" name="password" id="password">
+            </div>
+        </div>
+        <div class="container" style="display: flex;">
+            <div style="flex: 1;">
+                <input class="btn btn-outline-primary" type="submit" value="登入" style="font-size: xx-large;">
+            </div>
+        </div>
+</form>
+{% endblock %}

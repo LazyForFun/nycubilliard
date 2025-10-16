@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block switch %}{% endblock %}
+{% block title %}新增比賽{% endblock %}
+
+
+{% block content %}
+    <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">上傳並建立賽程</button>
+    </form>
+{% endblock %}

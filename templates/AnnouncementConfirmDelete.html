@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block switch %}{% endblock %}
+{% block title %}刪除公告{% endblock %}
+
+
+{% block content %}
+<h2>確定要刪除這則公告嗎？</h2>
+<p><strong>{{ object.title }}</strong></p>
+<p>{{ object.content|truncatechars:100 }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">刪除</button>
+    <a href="{% url 'AnnouncementListView' %}">取消</a>
+</form>
+{% endblock %}

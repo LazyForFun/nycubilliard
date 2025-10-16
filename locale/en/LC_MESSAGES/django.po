@@ -1,0 +1,71 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-10-08 10:21+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\templates\ListAnnouncement.html:4
+msgid "公告欄"
+msgstr "Announcements board"
+
+#: .\templates\ListAnnouncement.html:28
+msgid "目前沒有公告。"
+msgstr "No announcements available."
+
+#: .\templates\ListStageAndMatch.html:9
+msgid "姓名"
+msgstr "Name"
+
+#: .\templates\ListStageAndMatch.html:10 .\templates\ListTournament.html:11
+msgid "搜尋"
+msgstr "Search"
+
+#: .\templates\ListStageAndMatch.html:61
+msgid "桌次:"
+msgstr "Table:"
+
+#: .\templates\ListStageAndMatch.html:62
+msgid "開賽時間:"
+msgstr "Start time:"
+
+#: .\templates\ListTournament.html:3
+msgid "所有賽事"
+msgstr "Tournaments"
+
+#: .\templates\ListTournament.html:9
+msgid "比賽名稱"
+msgstr "Tournament name"
+
+#: .\templates\ListTournament.html:10
+msgid "學年"
+msgstr "Semester"
+
+#: .\templates\ListTournament.html:20
+msgid "查看賽程表"
+msgstr "View schedule"
+
+#: .\templates\ListTournament.html:25
+msgid "目前沒有賽事。"
+msgstr "No tournaments available."
+
+#: .\templates\layout.html:15
+msgid "公告"
+msgstr "Announcement"
+
+#: .\templates\layout.html:18
+msgid "賽事"
+msgstr "Tournaments"

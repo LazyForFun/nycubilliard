@@ -1,0 +1,286 @@
+{% extends "layout.html" %}
+{% load i18n %}
+
+{# --- 導覽列下方的階段切換按鈕（只在雙敗或循環賽顯示） --- #}
+{% block switch %}
+    {% if has_two_stages %}
+    <div class="stage-tabs">
+        <button id="btn-group" class="stage-tab active" onclick="showStage('group')">
+            STAGE 1
+        </button>
+        <button id="btn-final" class="stage-tab" onclick="showStage('final')">
+            LAST {{ tournament.player_num|divisibleby:2|yesno:"32,16" }}
+        </button>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block title %}{{ tournament.semester }} - {{ tournament.name }}{% endblock %}
+
+{% block content %}
+
+<form method="POST" style="margin-top: 1rem;">
+    {% csrf_token %}
+    {% trans "姓名" %}: <input type="text" name="name">
+    <button type="submit">{% trans "搜尋" %}</button>
+</form>
+
+{# =========================================================== #}
+{# === 雙階段賽制（雙敗 or 循環賽） ======================== #}
+{# =========================================================== #}
+{% if has_two_stages %}
+
+<!-- STAGE 1 -->
+<div id="group-stage">
+    <div class="tournament-container">
+        {% for sm in group_stage_matches %}
+        <div class="stage">
+            <button class="toggle-stage" onclick="toggleStage('group-{{ forloop.counter }}')">
+                {{ sm.stage.name }}
+            </button>
+            <ul class="match-list" id="group-{{ forloop.counter }}">
+                {% for match in sm.matches %}
+                    {% include "partials/match_item.html" %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% empty %}
+        <p>{% trans "尚無比賽資料" %}</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- FINAL STAGE -->
+<div id="final-stage" style="display:none;">
+    <div class="tournament-container">
+        {% if show_generate_button %}
+            {% if user.is_authenticated %}
+                <form method="POST" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="generate_single_elim">
+                    <button type="submit" class="btn-generate">生成單敗籤表</button>
+                </form>
+            {% endif %}
+        {% else %}
+            {% for sm in final_stage_matches %}
+            <div class="stage">
+                <button class="toggle-stage" onclick="toggleStage('final-{{ forloop.counter }}')">
+                    {{ sm.stage.name }}
+                </button>
+                <ul class="match-list" id="final-{{ forloop.counter }}">
+                    {% for match in sm.matches %}
+                        {% include "partials/match_item.html" %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% empty %}
+            <p>{% trans "尚無單敗賽資料" %}</p>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+{# =========================================================== #}
+{# === 單階段賽制（單敗） ==================================== #}
+{# =========================================================== #}
+{% else %}
+
+<div id="single-stage">
+    <div class="tournament-container">
+        {% for sm in final_stage_matches %}
+        <div class="stage">
+            <button class="toggle-stage" onclick="toggleStage('single-{{ forloop.counter }}')">
+                {{ sm.stage.name }}
+            </button>
+            <ul class="match-list" id="single-{{ forloop.counter }}">
+                {% for match in sm.matches %}
+                    {% include "partials/match_item.html" %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% empty %}
+        <p>{% trans "尚無比賽資料" %}</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endif %}
+
+{# =========================================================== #}
+{# === 樣式區 ================================================= #}
+{# =========================================================== #}
+<style>
+.stage-tabs {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    background-color: #0e162b;
+    color: white;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 1rem;
+}
+.stage-tab {
+    flex: 1;
+    text-align: center;
+    padding: 0.75rem;
+    border: none;
+    background-color: transparent;
+    color: #ccc;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.stage-tab.active {
+    background-color: #1a2440;
+    color: white;
+}
+.stage-tab:hover {
+    background-color: #2a3550;
+    color: white;
+}
+
+.tournament-container { padding: 1rem; }
+.stage { margin-bottom: 2rem; }
+
+.toggle-stage {
+    width: 100%;
+    text-align: left;
+    padding: 0.5rem 1rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+}
+.match-list.collapsed { display: none; }
+
+.match-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.match {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background-color: #fafafa;
+}
+.match-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.main-row {
+    display: flex;
+    align-items: center;
+}
+
+.match-number {
+    flex: 0 0 5%;           /* 左側固定 1/4 */
+    font-weight: bold;
+    text-align: left;
+}
+
+/* 右側區塊：佔 3/4 */
+.match-info {
+    flex: 0 0 95%;
+    display: grid;
+    grid-template-columns: 1fr 0.5fr 0.3fr 0.5fr 1fr;
+    align-items: center;
+    text-align: center;
+}
+
+/*
+  欄位分配解釋：
+  1fr       → player1
+  0.5fr     → point1
+  0.3fr     → vs
+  0.5fr     → point2
+  1fr       → player2
+*/
+
+.player1 {
+    text-align: right;
+    padding-right: 0.5rem;
+}
+
+.player2 {
+    text-align: left;
+    padding-left: 0.5rem;
+}
+
+.vs {
+    text-align: center;
+}
+
+.point1 {
+    text-align: right;
+    padding-right: 0.25rem;
+}
+
+.point2 {
+    text-align: left;
+    padding-left: 0.25rem;
+}
+
+.winner { color: blue; font-weight: bold; }
+.loser { color: red; }
+.sub-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    font-size: 0.9rem;
+    color: #555;
+}
+.sub-row .table, .sub-row .start-time {
+    flex: 1;
+    text-align: center;
+}
+@media (max-width: 600px) {
+    .match { flex-direction: column; align-items: flex-start; }
+    .player1, .vs, .player2 { flex: 1 1 100%; text-align: left; }
+    .vs { display: none; }
+}
+</style>
+
+{# =========================================================== #}
+{# === Script 區 ============================================== #}
+{# =========================================================== #}
+<script>
+function toggleStage(stageId) {
+    const ul = document.getElementById(stageId);
+    ul.classList.toggle('collapsed');
+}
+
+function showStage(type) {
+    const group = document.getElementById("group-stage");
+    const final = document.getElementById("final-stage");
+    const btnGroup = document.getElementById("btn-group");
+    const btnFinal = document.getElementById("btn-final");
+
+    if (!group || !final) return;
+
+    if (type === "group") {
+        group.style.display = "block";
+        final.style.display = "none";
+        btnGroup.classList.add("active");
+        btnFinal.classList.remove("active");
+    } else {
+        group.style.display = "none";
+        final.style.display = "block";
+        btnFinal.classList.add("active");
+        btnGroup.classList.remove("active");
+    }
+}
+
+// 預設手機折疊所有 Stage
+if (window.innerWidth <= 600) {
+    document.querySelectorAll('.match-list').forEach(ul => ul.classList.add('collapsed'));
+}
+</script>
+
+{% endblock %}

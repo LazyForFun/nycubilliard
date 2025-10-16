@@ -1,0 +1,47 @@
+{% load i18n%}
+
+<li class="match">
+    <div class="match-row main-row">
+        <span class="match-number">#{{ match.match_number }}</span>
+
+        <div class="match-info">
+            <span class="player1">
+                {% if match.player1 %}
+                    {{ match.player1.name }} ({{ match.player1.innings }})
+                {% elif match.stage.name == "Tie Breaker" or 'Losers Round' in match.stage.name%}
+                    Loser of {{ match.source_match1.match_number }}
+                {% elif match.source_match1 %}
+                    Winner of {{ match.source_match1.match_number }}
+                {% else %}-{% endif %}
+            </span>
+
+            <span class="point {% if match.winner and match.winner == match.player1 %}winner{% elif match.winner and match.winner == match.player2 %}loser{% endif %}">
+                {{ match.point1 }}
+            </span>
+
+            <span class="vs">vs.</span>
+
+            <span class="point {% if match.winner and match.winner == match.player2 %}winner{% elif match.winner and match.winner == match.player1 %}loser{% endif %}">
+                {{ match.point2 }}
+            </span>
+
+            <span class="player2">
+                {% if match.player2 %}
+                    {{ match.player2.name }} ({{ match.player2.innings }})
+                {% elif match.stage.name == "Tie Breaker" or 'Losers' in match.stage.name %}
+                    Loser of {{ match.source_match2.match_number }}
+                {% elif match.source_match2 %}
+                    Winner of {{ match.source_match2.match_number }}
+                {% else %}-{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <div class="match-row sub-row">
+        <span class="table">{% trans "桌次:" %} {{ match.table|default:"-" }}</span>
+        <span class="start-time">{% trans "開賽時間:" %} {{ match.start_time|date:"Y-m-d H:i"|default:"-" }}</span>
+        {% if user.is_authenticated %}
+        <a href="{% url 'MatchDetailView' match.id %}" class="btn-go">{% trans "展開" %}</a>
+        {% endif %}
+    </div>
+</li>

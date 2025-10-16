@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block switch %}{% endblock %}
+{% block title %}{% if object %}編輯公告{% else %}新增公告{% endif %}{% endblock %}
+
+
+{% block content %}
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">{% if object %}更新{% else %}新增{% endif %}</button>
+</form>
+{% endblock %}

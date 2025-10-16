@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block switch %}{% endblock %}
+{% block title %}發布公告{% endblock %}
+
+
+{% block content %}
+    <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">發布</button>
+    </form>
+
+<!-- template -->
+<style>
+.large-textarea {
+    vertical-align: top; /* 對齊標籤上緣 */
+}
+label[for="id_content"] {
+    vertical-align: top;
+    display: inline-block; /* 確保可對齊 */
+    width: 80px; /* 可調整寬度對齊整齊 */
+}
+</style>
+
+{% endblock %}
