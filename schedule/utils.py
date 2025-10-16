@@ -98,7 +98,8 @@ def create_double_elimination_bracket(tournament: Tournament, players: list[Play
     group_names = ["A", "B", "C", "D"]
     match_counter = 1
 
-    advancing_players = []
+    advancing_players_win = []
+    advancing_players_lose = []
     for g_idx, group_players in enumerate(groups):
         group_label = group_names[g_idx] if g_idx < len(group_names) else f"Group {g_idx+1}"
 
@@ -181,10 +182,16 @@ def create_double_elimination_bracket(tournament: Tournament, players: list[Play
             match_counter += 1
             losers_qualification_matches.append(match)
 
-        advancing_players += [m.winner for m in winners_qualification_matches]  # 對應勝部第一輪勝者
-        advancing_players += [m.winner for m in losers_qualification_matches]   # 對應敗部第二輪勝者
+        advancing_players_win += [m.winner for m in winners_qualification_matches]  # 對應勝部第一輪勝者
+        advancing_players_lose += [m.winner for m in losers_qualification_matches]   # 對應敗部第二輪勝者
 
-    random.shuffle(advancing_players)
+    random.shuffle(advancing_players_win)
+    random.shuffle(advancing_players_lose)
+
+    advancing_players = []
+    for w_p, l_p in zip(advancing_players_win, advancing_players_lose):
+        advancing_players.append(w_p)
+        advancing_players.append(l_p)
 
     if advancing_players:
         create_single_elimination_bracket(tournament, advancing_players, start_match_number=match_counter)
