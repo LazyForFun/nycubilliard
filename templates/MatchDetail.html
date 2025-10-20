@@ -7,31 +7,15 @@
 <div class="match-detail-container">
     <h2>比賽編號: {{ match.match_number }}</h2>
 
-    <!-- 第一行: 選手1 vs 選手2 -->
-    <div class="match-row main-row">
-        <span class="player1">
-            {% if match.player1 %}
-                {{ match.player1.name }}
-            {% elif match.source_match1 %}
-                Winner of {{ match.source_match1.match_number }}
-            {% else %}
-                -
-            {% endif %}
-        </span>
-        <span class="vs">vs.</span>
-        <span class="player2">
-            {% if match.player2 %}
-                {{ match.player2.name }}
-            {% elif match.source_match2 %}
-                Winner of {{ match.source_match2.match_number }}
-            {% else %}
-                -
-            {% endif %}
-        </span>
-    </div>
-
     <form method="post" action="{% url 'MatchDetailView' match.id %}" id="matchForm">
         {% csrf_token %}
+
+        <!-- 第一行: 選手1 vs 選手2 -->
+        <div class="match-row main-row">
+            <input type="text" name="player1" placeholder="選手1" value="{{ match.player1.name }}">
+            <span class="vs">vs.</span>
+            <input type="text" name="player2" placeholder="選手2" value="{{ match.player2.name }}">
+        </div>
 
         <!-- 第二行: 比分輸入 -->
         <div class="match-row score-row">

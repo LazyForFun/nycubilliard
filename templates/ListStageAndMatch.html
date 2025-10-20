@@ -21,6 +21,7 @@
 
 <form method="POST" style="margin-top: 1rem;">
     {% csrf_token %}
+    <input type="hidden" name="action" value="search">
     {% trans "姓名" %}: <input type="text" name="name">
     <button type="submit">{% trans "搜尋" %}</button>
 </form>
@@ -254,7 +255,31 @@
 function toggleStage(stageId) {
     const ul = document.getElementById(stageId);
     ul.classList.toggle('collapsed');
+
+    // 記錄目前狀態到 localStorage
+    const collapsedStages = JSON.parse(localStorage.getItem('collapsedStages') || '[]');
+    if (ul.classList.contains('collapsed')) {
+        if (!collapsedStages.includes(stageId)) collapsedStages.push(stageId);
+    } else {
+        const idx = collapsedStages.indexOf(stageId);
+        if (idx > -1) collapsedStages.splice(idx, 1);
+    }
+    localStorage.setItem('collapsedStages', JSON.stringify(collapsedStages));
 }
+
+// 頁面載入時恢復摺疊狀態
+window.addEventListener('DOMContentLoaded', () => {
+    const collapsedStages = JSON.parse(localStorage.getItem('collapsedStages') || '[]');
+    collapsedStages.forEach(id => {
+        const ul = document.getElementById(id);
+        if (ul) ul.classList.add('collapsed');
+    });
+
+    // 手機預設全部摺疊（除非已手動展開過）
+    if (window.innerWidth <= 600 && collapsedStages.length === 0) {
+        document.querySelectorAll('.match-list').forEach(ul => ul.classList.add('collapsed'));
+    }
+});
 
 function showStage(type) {
     const group = document.getElementById("group-stage");
@@ -275,11 +300,6 @@ function showStage(type) {
         btnFinal.classList.add("active");
         btnGroup.classList.remove("active");
     }
-}
-
-// 預設手機折疊所有 Stage
-if (window.innerWidth <= 600) {
-    document.querySelectorAll('.match-list').forEach(ul => ul.classList.add('collapsed'));
 }
 </script>
 

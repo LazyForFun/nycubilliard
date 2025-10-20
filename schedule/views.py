@@ -7,10 +7,10 @@ from django.db.models import Q
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-import csv, io, random
+import csv, io, random, math
 from .models import Tournament, Player, Announcement, Match
 from .forms import PlayerImportForm, AnnouncementForm
-from .utils import create_single_elimination_bracket, create_double_elimination_bracket, create_mixed_bracket, advance_from_round_robin_and_create_single_elim
+from .utils import create_single_elimination_bracket, create_double_elimination_bracket, create_mixed_bracket, advance_from_round_robin_and_create_single_elim, advance_from_double_elim_and_create_single_elim
 
 # Create your views here.
 class Home(View):
@@ -49,6 +49,13 @@ class MatchDetailView(LoginRequiredMixin, View):
     
     def post(self, request, pk):
         match = Match.objects.get(id=pk)
+        
+        match.player1.name = request.POST.get('player1')
+        match.player2.name = request.POST.get('player2')
+
+        match.player1.save()
+        match.player2.save()
+
         start_time = request.POST.get('start_time')
         if start_time != '':
             match.start_time = start_time
@@ -161,6 +168,11 @@ class TournamentCreateView(LoginRequiredMixin, View):
             # ✅ 3. 取得要讀取的玩家數量
             expected_count = form.cleaned_data["player_num"]
 
+            # 檢查是否為 2 的次方
+            if expected_count <= 0 or (expected_count & (expected_count - 1)) != 0:
+                messages.error(request, "人數必須是 2 的次方，例如 4、8、16、32 ...")
+                return render(request, self.template_name, {"form": form})
+
             # ✅ 4. 逐行讀取並限制最多讀取 expected_count 行
             player_names = []
             innings_list = []
@@ -231,12 +243,15 @@ class TournamentDetailView(View):
         elif action == "generate_single_elim":
             tournament = get_object_or_404(Tournament, id=pk)
 
-            if tournament.type != "round_robin":
+            if tournament.type == "single_elim":
                 messages.error(request, "只有循環賽才能生成單敗籤表！")
                 return redirect("TournamentDetailView", pk=pk)
 
             try:
-                advance_from_round_robin_and_create_single_elim(tournament)
+                if tournament.type == 'round_robin':
+                    advance_from_round_robin_and_create_single_elim(tournament)
+                elif tournament.type == 'double_elim':
+                    advance_from_double_elim_and_create_single_elim(tournament)
                 messages.success(request, "單敗籤表已成功生成！")
             except Exception as e:
                 messages.error(request, f"生成籤表時發生錯誤：{e}")
@@ -278,15 +293,15 @@ class TournamentDetailView(View):
             else:
                 final_stages.append(data)
 
-        is_round_robin = tournament.type == 'round_robin'
+        has_two_stages = tournament.type in ['double_elim', 'round_robin']
         has_final_matches = bool(final_stages)
 
         context = {
             'tournament': tournament,
             'group_stage_matches': group_stages,
             'final_stage_matches': final_stages,
-            'has_two_stages': tournament.type in ['double_elim', 'round_robin'],
-            'show_generate_button': is_round_robin and not has_final_matches,
+            'has_two_stages': has_two_stages,
+            'show_generate_button': has_two_stages and not has_final_matches,
         }
         return render(request, 'ListStageAndMatch.html', context)
 
