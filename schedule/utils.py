@@ -293,11 +293,108 @@ def advance_from_round_robin_and_create_single_elim(tournament):
     - 特殊情況：W = 該玩家 inning，FF = 0
     - 單敗籤表生成時避免同組首輪對戰
     """
+    standings = get_round_robin_standings(tournament)
+    advanced_players = []
+    t = tournament.advance_per_group
+    for group, players in standings.items():
+        for player in players[:t]:
+            advanced_players.append(player['player'])
+    # group_stages = tournament.stages.filter(name__icontains="Group").order_by("order")
+    # records = defaultdict(lambda: {"wins": 0, "games_for": 0, "games_against": 0})
+    # group_advancers = defaultdict(list)  # {group_name: [players...]}
+
+    # # === 統計循環賽數據 ===
+    # for stage in group_stages:
+    #     matches = stage.matches.all()
+    #     for match in matches:
+    #         p1, p2 = match.player1, match.player2
+    #         if not p1 or not p2:
+    #             continue
+
+    #         point1, point2 = match.point1, match.point2
+    #         if point1 is None or point2 is None:
+    #             continue
+
+    #         def convert_point(point, player):
+    #             if isinstance(point, (int, float)):
+    #                 return point
+    #             if isinstance(point, str):
+    #                 if point.upper() == "W":
+    #                     return getattr(player, "inning", 1)
+    #                 elif point.upper() == "FF":
+    #                     return 0
+    #             return 0
+
+    #         p1_point = convert_point(point1, p1)
+    #         p2_point = convert_point(point2, p2)
+
+    #         records[p1]["games_for"] += p1_point
+    #         records[p1]["games_against"] += p2_point
+    #         records[p2]["games_for"] += p2_point
+    #         records[p2]["games_against"] += p1_point
+
+    #         if p1_point > p2_point:
+    #             records[p1]["wins"] += 1
+    #         elif p2_point > p1_point:
+    #             records[p2]["wins"] += 1
+
+    # # === 決定各組晉級 ===
+    # for stage in group_stages:
+    #     group_players = set()
+    #     for match in stage.matches.all():
+    #         if match.player1:
+    #             group_players.add(match.player1)
+    #         if match.player2:
+    #             group_players.add(match.player2)
+
+    #     group_records = []
+    #     for p in group_players:
+    #         rec = records[p]
+    #         gf, ga = rec["games_for"], rec["games_against"]
+    #         ratio = gf / (gf + ga) if (gf + ga) > 0 else 0
+    #         group_records.append((p, rec["wins"], gf, ga, ratio))
+
+    #     group_records.sort(key=lambda x: (x[1], x[2], -x[3], x[4]), reverse=True)
+
+    #     advance_num = tournament.advance_per_group or 2
+    #     group_advancers[stage.name] = [x[0] for x in group_records[:advance_num]]
+
+    # # === 防同組對戰抽籤 ===
+    # all_advancers = []
+    # groups = list(group_advancers.values())
+
+    # # 假設每組晉級相同人數（一般情況）
+    # # 我們以「蛇形」分配到不同半區
+    # for i in range(max(len(g) for g in groups)):
+    #     for group in groups:
+    #         if i < len(group):
+    #             all_advancers.append(group[i])
+
+    # # 若仍需隨機微調（例如組數太少），再隨機交換部分種子
+    # random.shuffle(all_advancers)
+
+    # # === 生成單敗籤表 ===
+    random.shuffle(advanced_players)
+    create_single_elimination_bracket(tournament, advanced_players)
+    return tournament
+
+def get_round_robin_standings(tournament):
+    """
+    即時計算循環賽各組積分表。
+    回傳格式：
+    {
+        "Group A": [
+            {"player": player, "wins": 3, "games_for": 21, "games_against": 10, "ratio": 0.677},
+            ...
+        ],
+        ...
+    }
+    """
     group_stages = tournament.stages.filter(name__icontains="Group").order_by("order")
     records = defaultdict(lambda: {"wins": 0, "games_for": 0, "games_against": 0})
-    group_advancers = defaultdict(list)  # {group_name: [players...]}
+    group_standings = defaultdict(list)
 
-    # === 統計循環賽數據 ===
+    # === 統計數據 ===
     for stage in group_stages:
         matches = stage.matches.all()
         for match in matches:
@@ -306,8 +403,12 @@ def advance_from_round_robin_and_create_single_elim(tournament):
                 continue
 
             point1, point2 = match.point1, match.point2
-            if point1 is None or point2 is None:
+            if point1 == '' or point2 == '':
                 continue
+            if point1 != 'W' and point1 != 'FF':
+                point1 = int(point1)
+            if point2 != 'W' and point2 != 'FF':
+                point2 = int(point2)
 
             def convert_point(point, player):
                 if isinstance(point, (int, float)):
@@ -332,7 +433,7 @@ def advance_from_round_robin_and_create_single_elim(tournament):
             elif p2_point > p1_point:
                 records[p2]["wins"] += 1
 
-    # === 決定各組晉級 ===
+    # === 各組排名 ===
     for stage in group_stages:
         group_players = set()
         for match in stage.matches.all():
@@ -341,32 +442,20 @@ def advance_from_round_robin_and_create_single_elim(tournament):
             if match.player2:
                 group_players.add(match.player2)
 
-        group_records = []
+        player_list = []
         for p in group_players:
             rec = records[p]
             gf, ga = rec["games_for"], rec["games_against"]
             ratio = gf / (gf + ga) if (gf + ga) > 0 else 0
-            group_records.append((p, rec["wins"], gf, ga, ratio))
+            player_list.append({
+                "player": p,
+                "wins": rec["wins"],
+                "games_for": gf,
+                "games_against": ga,
+                "ratio": round(ratio, 3),
+            })
 
-        group_records.sort(key=lambda x: (x[1], x[2], -x[3], x[4]), reverse=True)
+        player_list.sort(key=lambda x: (x["wins"], x["games_for"], -x["games_against"], x["ratio"]), reverse=True)
+        group_standings[stage.name] = player_list
 
-        advance_num = tournament.advance_per_group or 2
-        group_advancers[stage.name] = [x[0] for x in group_records[:advance_num]]
-
-    # === 防同組對戰抽籤 ===
-    all_advancers = []
-    groups = list(group_advancers.values())
-
-    # 假設每組晉級相同人數（一般情況）
-    # 我們以「蛇形」分配到不同半區
-    for i in range(max(len(g) for g in groups)):
-        for group in groups:
-            if i < len(group):
-                all_advancers.append(group[i])
-
-    # 若仍需隨機微調（例如組數太少），再隨機交換部分種子
-    random.shuffle(all_advancers)
-
-    # === 生成單敗籤表 ===
-    create_single_elimination_bracket(tournament, all_advancers)
-    return tournament
+    return group_standings

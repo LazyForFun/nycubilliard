@@ -1,5 +1,6 @@
 {% extends "layout.html" %}
 {% load i18n %}
+{% load custom_filter %}
 
 {# --- 導覽列下方的階段切換按鈕（只在雙敗或循環賽顯示） --- #}
 {% block switch %}
@@ -44,11 +45,40 @@
                     {% include "partials/match_item.html" %}
                 {% endfor %}
             </ul>
+            {% if standings %}
+                <h3>{{ sm.stage.name }}</h3>
+                <table class="standing-table">
+                    <thead>
+                        <tr>
+                            <th>排名</th>
+                            <th>選手</th>
+                            <th>勝場</th>
+                            <th>得局</th>
+                            <th>失局</th>
+                            <th>得局率</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in standings|get_item:sm.stage.name %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ p.player.name }}</td>
+                            <td>{{ p.wins }}</td>
+                            <td>{{ p.games_for }}</td>
+                            <td>{{ p.games_against }}</td>
+                            <td>{{ p.ratio|floatformat:3 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
         </div>
+
         {% empty %}
         <p>{% trans "尚無比賽資料" %}</p>
         {% endfor %}
     </div>
+    
 </div>
 
 <!-- FINAL STAGE -->
@@ -241,6 +271,28 @@
     flex: 1;
     text-align: center;
 }
+
+.standings-container {
+    margin-top: 2rem;
+}
+.standing-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+}
+.standing-table th, .standing-table td {
+    border: 1px solid #ccc;
+    padding: 0.5rem 0.75rem;
+    text-align: center;
+}
+.standing-table th {
+    background-color: #1a2440;
+    color: white;
+}
+.standing-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
 @media (max-width: 600px) {
     .match { flex-direction: column; align-items: flex-start; }
     .player1, .vs, .player2 { flex: 1 1 100%; text-align: left; }

@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 import csv, io, random, math
 from .models import Tournament, Player, Announcement, Match
 from .forms import PlayerImportForm, AnnouncementForm
-from .utils import create_single_elimination_bracket, create_double_elimination_bracket, create_mixed_bracket, advance_from_round_robin_and_create_single_elim, advance_from_double_elim_and_create_single_elim
+from .utils import create_single_elimination_bracket, create_double_elimination_bracket, create_mixed_bracket, advance_from_round_robin_and_create_single_elim, advance_from_double_elim_and_create_single_elim, get_round_robin_standings
 
 # Create your views here.
 class Home(View):
@@ -87,7 +87,7 @@ class MatchDetailView(LoginRequiredMixin, View):
                     next_match.player2 = match.winner
             next_match.save()
 
-        return redirect('TournamentDetailView', pk=match.stage.tournament.id)
+        return redirect(f"{reverse('TournamentDetailView', args=[match.stage.tournament.id])}?show_standings=1")
     
 class AnnouncementDeleteView(LoginRequiredMixin, DeleteView):
     model = Announcement
@@ -229,7 +229,9 @@ class TournamentCreateView(LoginRequiredMixin, View):
     
 class TournamentDetailView(View):
     def get(self, request, pk):
-        return self.render_tournament(request, pk)
+        tournament = Tournament.objects.get(id=pk)
+        show_standings = request.GET.get("show_standings") or tournament.type == 'round_robin'
+        return self.render_tournament(request, pk, show_standings)
 
     def post(self, request, pk):
         # 判斷 POST 目的
@@ -261,7 +263,7 @@ class TournamentDetailView(View):
         # 其他未知情況就照舊顯示
         return self.render_tournament(request, pk)
 
-    def render_tournament(self, request, pk, is_post=False):
+    def render_tournament(self, request, pk, show_standings=False, is_post=False):
         tournament = Tournament.objects.get(id=pk)
 
         # 搜尋功能（僅 POST 時啟用）
@@ -296,13 +298,19 @@ class TournamentDetailView(View):
         has_two_stages = tournament.type in ['double_elim', 'round_robin']
         has_final_matches = bool(final_stages)
 
+        standings = None
+        if show_standings:
+            standings = get_round_robin_standings(tournament)
+            
         context = {
             'tournament': tournament,
             'group_stage_matches': group_stages,
             'final_stage_matches': final_stages,
             'has_two_stages': has_two_stages,
             'show_generate_button': has_two_stages and not has_final_matches,
+            'standings': standings,
         }
+        # print(context['standings'])
         return render(request, 'ListStageAndMatch.html', context)
 
     
