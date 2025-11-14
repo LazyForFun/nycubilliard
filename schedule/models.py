@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
+
+from datetime import timedelta
 
 class Tournament(models.Model):
     TYPE_CHOICES = [
@@ -88,3 +91,4 @@ class Match(models.Model):
 class Announcement(models.Model):
     title = models.CharField(max_length=200)
     content = models.CharField(max_length=100000)
+    due_date = models.DateField(default=(timezone.now().date() + timedelta(days=7)))

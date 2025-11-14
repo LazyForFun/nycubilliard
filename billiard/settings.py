@@ -42,6 +42,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_crontab',
+]
+
+CRONJOBS = [
+    ('0 0 * * *', 'announcement.cron.delete_expired_announcements')
 ]
 
 MIDDLEWARE = [
